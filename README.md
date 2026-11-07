@@ -1,4 +1,4 @@
-# Multiscale-Hasgrid-demo-enviroment
+# Multiscale-Hashgrid-demo-enviroment
 
 ![Environment](screenshots/environment.gif)
 
