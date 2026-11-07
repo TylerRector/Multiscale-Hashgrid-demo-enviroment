@@ -1,0 +1,75 @@
+# config.toml — the base run config (hardware-independent knobs).
+# Effective config = config.toml  <-  profiles/<profile>.toml  (profile overrides win).
+# Data-driven principle #3: config x profile x seed reproduces any run.
+
+[run]
+level = "level/level.toml"
+seed = 1234
+
+[stage1]
+# hero defaults (plan Stage 1). Profiles shrink these for cpu/micro.
+n_cameras = 24
+res = 128
+spp = 32
+depth = 4
+rr_start_depth = 2      # Russian roulette begins after this bounce
+
+[stage2]
+light_samples = 1024    # cpu profile: pre-gathered table size (pose,light pairs)
+pool_size = 64          # gpu profiles: live denoised pool
+pool_replace_every = 4  # gpu profiles: replace 1 image / N iters
+gather_chunk = 262144   # segments per gather chunk (VRAM control)
+denoise = "oidn"        # oidn | bilateral (fallback)
+
+[stage3]
+net = "4x64"            # 3x32 | 4x64 | 6x128
+hashgrid_levels = 8
+hashgrid_log2_entries = 15
+hashgrid_features = 2
+iters = 25000
+batch = 16384           # 2^14 tuples
+lr = 1e-2
+lr_final_frac = 0.01    # cosine decay target
+relmse_eps = 0.01       # paper Eq. 4
+amp = true              # fp16 AMP (ignored on cpu)
+ckpt_every_sec = 300    # 5 min
+max_hours = 8.0
+
+[stage3.validation]
+held_out_pairs = 200
+psnr_target_db = 30.0
+
+[stage4]
+active_light_cap = 4    # linear per light; cap in shader
+
+[bench]
+res = 512
+
+# ---------------------------------------------------------------------------
+# [fix] — feature flags for the mottling fixplan (Downloads/fixplan.md).
+# ALL default to the pre-fix pipeline behavior, so the P0 baseline reproduces
+# the original mottled render. Each fix phase flips exactly one of these.
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# [spec] — feature flags for the metallic-object + free-camera spec (Downloads/spec(70).md).
+# ALL default off = the post-fixplan diffuse pipeline. Each spec phase flips ONE flag.
+# ---------------------------------------------------------------------------
+[spec]
+fix_intensity      = true      # M0: composite NRP once (E already learned). false reproduces the bug
+objects_enabled    = false     # M1: analytic conductor objects (from level.toml) in runtime + scene
+free_camera        = false     # M2: pitch + fly camera poses in bench/held-out sampling
+reattribute_metal  = false     # M3: Stage1/2 first-diffuse-hit re-attribution + is_specular schema v3
+orbit_cams_per_obj = 0         # M3: extra blue-noise ring cameras aimed at each object
+specular_bounces   = 0         # M4/M5: runtime specular chase depth (0 off, 1 mirror, 2 inter-reflect)
+roughness_override = -1.0      # R1/R2: force object roughness (>=0); -1 = per-object from level.toml
+
+[fix]
+clean_supervision      = false     # P1: strong edge-avoiding (a-trous) denoise of targets
+require_clean_targets  = false     # P1: Stage 3 refuses to train on non-denoised ("raw") lineage
+grid_rightsize         = false     # P2: derive hashgrid capacity from table occupancy
+min_samples_per_cell   = 16        # P2 + CI invariant: min samples per active finest cell
+atlas_fp16             = false     # P2: store hashgrid atlas features as fp16
+grid_weight_decay      = 0.0       # P3: weight decay on hashgrid feature table ONLY (e.g. 1e-5)
+grid_feature_init      = 1.0e-4    # P3/model: hashgrid feature init U(-a, a)
+tonemap_loss           = false     # P4a: rel-MSE in Reinhard-tonemapped domain T(I)=I/(1+I)
+light_wall_margin      = 0.0       # P4b: min torch-wall clearance (world units); 0 = disabled

@@ -1,0 +1,34 @@
+{
+  "source_run": "fix_p5",
+  "grid_resolutions": [
+    4,
+    5,
+    6,
+    8
+  ],
+  "feature_table_shape": [
+    4,
+    2048,
+    2
+  ],
+  "mlp_hidden_layers": [
+    64,
+    64,
+    64,
+    64
+  ],
+  "parameter_count": 30211,
+  "source_training_iterations": 8000,
+  "atlas_matches_saved_model_after_float16_conversion": true,
+  "atlas_sha256": "b22a57050e36cb22ceb1a7eff8392ca0cfc4c2f1b220e7e876b6bdfbf1596fbd",
+  "sample_check": {
+    "count": 4096,
+    "sampling_seed": 71,
+    "dataset": "original training table, schema version 2",
+    "initial_model_seed": 1337,
+    "initial_model_mse": 1.9631576538085938,
+    "trained_model_mse": 0.013260162435472012,
+    "float16_export_relative_max_error": 0.003194075543433428
+  },
+  "scope": "Weight and export checks performed on existing local artifacts; the sample MSE is a training-set check, not a held-out quality claim."
+}

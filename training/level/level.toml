@@ -1,0 +1,95 @@
+# level.toml — the ONE source of truth for the world.
+# Consumed by: level/exporter.py (-> Mitsuba scene), stage1/2 samplers, and the game runtime.
+# Data-driven principle #1: exporter, samplers, and game all read THIS file. Nothing else defines the world.
+
+[meta]
+name = "corridor_e1m1"
+version = 1
+# Grid is row-major: map[row][col]. '#' = wall, '.' = floor. World X = col, World Z = row, Y = up.
+cell_size = 1.0        # world units per tile
+eye_height = 0.5       # torch / camera height above floor (world units)
+wall_height = 1.0
+
+# 12x9 tile map. Border walls + a couple of interior pillars => corridors with GI bleed potential.
+map = [
+  "############",
+  "#..........#",
+  "#..####....#",
+  "#..#.......#",
+  "#..#..##...#",
+  "#.....##...#",
+  "#........#.#",
+  "#..........#",
+  "############",
+]
+
+[albedo]
+# Per-material diffuse reflectance (linear RGB). Referenced by the exporter.
+wall  = [0.72, 0.68, 0.60]   # warm stone
+floor = [0.40, 0.42, 0.46]   # cool grey
+ceil  = [0.55, 0.52, 0.50]
+
+[display]
+# corrections C0: the ONE shared display transform. Applied identically to game frames, headless
+# frames, and Mitsuba references before any metric or PNG (Reinhard tonemap + gamma). Blowout must
+# never be attributable to a mismatched transform. Game shader (make_deferred) and Python
+# bench/phase_render.tonemap both use exposure*Reinhard(c/(1+c))^(1/gamma).
+exposure = 1.0
+gamma = 2.2
+
+[torch]
+# The player-bound sphere light. Position is dynamic at runtime; radius fixed (plan §1: 3D light params).
+radius = 0.12
+intensity = [12.0, 8.5, 5.0]   # warm point-ish emitter (radiant intensity, linear RGB)
+# corrections C1 (D1): explicit emitter radiance for the units contract. For a point emitter Mitsuba's
+# `intensity` IS the radiant intensity; radiance_rgb is the value the light-hit path adds when the
+# torch sphere is seen directly OR in a mirror, tinted by conductor Fresnel: L += tint*F(cosθ)*radiance.
+# One definition (schemas.emitter_radiance), three consumers (gather, network scaling, shader/runtime).
+radiance_rgb = [12.0, 8.5, 5.0]
+height = 0.5                    # matches eye_height; torch rides at player eye
+
+[[static_lights]]
+# A few fixed lights baked into the sampler's light domain (plan Stage 2 light sampler).
+name = "sconce_a"
+pos = [1.5, 0.6, 1.5]
+radius = 0.10
+intensity = [6.0, 5.0, 4.0]
+radiance_rgb = [6.0, 5.0, 4.0]   # C1 units contract (see [torch])
+
+[[static_lights]]
+name = "sconce_b"
+pos = [10.5, 0.6, 6.5]
+radius = 0.10
+intensity = [4.0, 4.5, 6.0]
+radiance_rgb = [4.0, 4.5, 6.0]   # C1 units contract (see [torch])
+
+# spec(70).md §3: metallic reflective objects. Analytic intersectors in the runtime, roughconductor
+# in the Mitsuba export — both consume THIS list (single source of truth). Placed in the open
+# corridor so they are walkable-visible. roughness is phase-gated (0 -> 0.1 -> 0.3).
+[[objects]]
+id        = "orb"
+shape     = "sphere"
+center    = [5.5, 0.5, 6.5]
+radius    = 0.45
+material  = "conductor"
+f0_rgb    = [0.95, 0.64, 0.54]   # copper
+roughness = 0.0
+
+[[objects]]
+id        = "pillar"
+shape     = "box"
+min       = [9.0, 0.0, 4.0]
+max       = [9.4, 1.0, 4.4]
+material  = "conductor"
+f0_rgb    = [0.91, 0.92, 0.92]   # silver
+roughness = 0.0
+
+[light_domain]
+# The walkable volume the torch can occupy, at torch height. Plan §Stage2: sampler ⊆ walkable mask.
+# Bounds are derived from the walkable tiles at export time; this section pins the sampling height band.
+z_min = 0.45
+z_max = 0.55
+# fixplan P4b: minimum torch-to-wall clearance (world units). The torch rides at the player's hand,
+# never inside a wall, so training samples must keep this clearance from any wall (removes the 1/r^2
+# near-wall singularity from the training distribution). 0 = disabled; P4b sets it to the torch radius.
+light_wall_margin = 0.0

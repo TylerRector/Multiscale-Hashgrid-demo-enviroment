@@ -1,0 +1,33 @@
+# profile: micro — the CI end-to-end smoke profile (plan §2.1 / M0).
+# 8 cams, 64^2, 8 spp, 2k iters, ~10 min on CPU. Runs the full pipeline every commit.
+
+[profile]
+name = "micro"
+device = "cpu"
+amp = false
+workers = 6
+
+[stage1]
+n_cameras = 8
+res = 64
+spp = 8
+depth = 4
+
+[stage2]
+mode = "table"
+light_samples = 96
+gather_chunk = 131072
+
+[stage3]
+net = "3x32"
+iters = 2000
+batch = 8192
+ckpt_every_sec = 60
+
+[stage3.validation]
+held_out_pairs = 32
+# Micro validates PLUMBING + view-generalization, not hero quality. At 8 cams only ~26% of
+# surface points are supervised (coverage.npy), so held-out PSNR is coverage-limited by design
+# (plan risk: "raise camera count before resolution"). This floor catches a BROKEN pipeline
+# (NaN / 0 dB / degenerate-dark output), not under-target quality. Hero quality gate is M3 (30 dB).
+psnr_target_db = 9.0

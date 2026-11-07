@@ -1,0 +1,8 @@
+/build/
+/training/runs/
+/training/game/
+__pycache__/
+*.py[cod]
+.venv/
+*.log
+*.ppm

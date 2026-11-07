@@ -1,0 +1,111 @@
+{
+  "arch": {
+    "net": "4x64",
+    "hashgrid": {
+      "levels": 4,
+      "log2_entries": 11,
+      "features": 2,
+      "res": [
+        4,
+        5,
+        6,
+        8
+      ],
+      "n_entries": 2048,
+      "max_res": 8
+    },
+    "aabb_min": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "aabb_max": [
+      12.0,
+      1.0,
+      9.0
+    ],
+    "in_dim": 17,
+    "profile": "fix_p5",
+    "iters": 8000,
+    "git": "nogit",
+    "target_lineage": "atrous",
+    "grid_weight_decay": 1e-05,
+    "grid_rightsize": {
+      "max_res": 8,
+      "occ": 392,
+      "frac_ok": 0.9872448979591837,
+      "median": 553.5,
+      "levels": 4,
+      "log2": 11,
+      "min_samples": 16
+    },
+    "tonemap_loss": false,
+    "atlas_fp16": true
+  },
+  "hashgrid": {
+    "levels": 4,
+    "features": 2,
+    "n_entries": 2048,
+    "res": [
+      4,
+      5,
+      6,
+      8
+    ],
+    "table_off": 0,
+    "table_len": 16384
+  },
+  "layers": [
+    {
+      "in": 17,
+      "out": 64,
+      "w_off": 16384,
+      "b_off": 17472
+    },
+    {
+      "in": 64,
+      "out": 64,
+      "w_off": 17536,
+      "b_off": 21632
+    },
+    {
+      "in": 64,
+      "out": 64,
+      "w_off": 21696,
+      "b_off": 25792
+    },
+    {
+      "in": 64,
+      "out": 64,
+      "w_off": 25856,
+      "b_off": 29952
+    },
+    {
+      "in": 64,
+      "out": 3,
+      "w_off": 30016,
+      "b_off": 30208
+    }
+  ],
+  "primes": [
+    1,
+    2654435761,
+    805459861
+  ],
+  "aabb_min": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "aabb_max": [
+    12.0,
+    1.0,
+    9.0
+  ],
+  "in_dim": 17,
+  "atlas_len": 30211,
+  "atlas_dtype": "float16",
+  "parity_tol": 0.05,
+  "active_light_cap": 4,
+  "git": "nogit"
+}
